@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>Scanner Registrasi Ulang</title>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js">
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      background: #f1f5f9;
+      color: #0f172a;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .header {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+    }
+
+    .header p {
+      margin: 0;
+      color: #64748b;
+    }
+
+    .card {
+      padding: 22px;
+      border-radius: 14px;
+      background: white;
+      box-shadow:
+        0 4px 18px rgba(15, 23, 42, 0.10);
+    }
+
+    #reader {
+      width: 100%;
+      min-height: 280px;
+      overflow: hidden;
+      border-radius: 10px;
+      background: #e2e8f0;
+    }
+
+    .message {
+      display: none;
+      margin-bottom: 16px;
+      padding: 13px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .message.info {
+      display: block;
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .message.success {
+      display: block;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .message.error {
+      display: block;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      min-height: 46px;
+      padding: 11px 18px;
+      border: 0;
+      border-radius: 8px;
+      background: #1d4ed8;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .secondary {
+      background: #475569;
+    }
+
+    .manual-section {
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .manual-section label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    .manual-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    input {
+      width: 100%;
+      min-height: 46px;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .result {
+      display: none;
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .result strong {
+      display: block;
+      margin-bottom: 7px;
+    }
+
+    .result-code {
+      overflow-wrap: anywhere;
+      color: #334155;
+      font-family: monospace;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 12px;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .manual-row {
+        flex-direction: column;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <header class="header">
+      <h1>Scanner Registrasi Ulang</h1>
+
+      <p>
+        Arahkan QR peserta ke kamera laptop.
+      </p>
+    </header>
+
+    <div
+      id="message"
+      class="message"
+      aria-live="polite">
+    </div>
+
+    <section class="card">
+      <div id="reader"></div>
+
+      <div class="button-group">
+        <button
+          id="startButton"
+          type="button">
+          Mulai Kamera
+        </button>
+
+        <button
+          id="stopButton"
+          type="button"
+          class="secondary"
+          disabled>
+          Matikan Kamera
+        </button>
+      </div>
+
+      <div
+        id="result"
+        class="result">
+
+        <strong>QR berhasil dibaca</strong>
+
+        <div
+          id="resultCode"
+          class="result-code">
+        </div>
+      </div>
+
+      <div class="manual-section">
+        <label for="manualCode">
+          Nomor peserta atau token QR
+        </label>
+
+        <div class="manual-row">
+          <input
+            id="manualCode"
+            type="text"
+            placeholder="Contoh: 0555001"
+            autocomplete="off"
+          >
+
+          <button
+            id="manualButton"
+            type="button">
+            Buka Data
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    /*
+     GANTI dengan URL Web App Apps Script Anda.
+     URL harus berakhir dengan /exec
+    */
+    const APP_SCRIPT_URL =
+      'https://script.google.com/macros/s/GANTI_DEPLOYMENT_ID/exec';
+
+    let qrScanner = null;
+    let cameraRunning = false;
+    let scanLocked = false;
+
+    const message =
+      document.getElementById('message');
+
+    const startButton =
+      document.getElementById('startButton');
+
+    const stopButton =
+      document.getElementById('stopButton');
+
+    const result =
+      document.getElementById('result');
+
+    const resultCode =
+      document.getElementById('resultCode');
+
+    const manualCode =
+      document.getElementById('manualCode');
+
+    const manualButton =
+      document.getElementById('manualButton');
+
+
+    function showMessage(text, type) {
+      message.textContent = text;
+      message.className = 'message ' + type;
+    }
+
+
+    function clearMessage() {
+      message.textContent = '';
+      message.className = 'message';
+    }
+
+
+    function validasiUrlAppsScript() {
+      return (
+        APP_SCRIPT_URL.startsWith(
+          'https://script.google.com/macros/s/'
+        ) &&
+        APP_SCRIPT_URL.endsWith('/exec') &&
+        !APP_SCRIPT_URL.includes(
+          'GANTI_DEPLOYMENT_ID'
+        )
+      );
+    }
+
+
+    function bukaDataPeserta(kode) {
+      const kodeBersih =
+        String(kode || '').trim();
+
+      if (!kodeBersih) {
+        showMessage(
+          'Kode QR atau nomor peserta masih kosong.',
+          'error'
+        );
+
+        return;
+      }
+
+      if (!validasiUrlAppsScript()) {
+        showMessage(
+          'URL Apps Script belum dimasukkan ke index.html.',
+          'error'
+        );
+
+        return;
+      }
+
+      const destination =
+        new URL(APP_SCRIPT_URL);
+
+      destination.searchParams.set(
+        'token',
+        kodeBersih
+      );
+
+      showMessage(
+        'Membuka data peserta...',
+        'success'
+      );
+
+      window.location.href =
+        destination.toString();
+    }
+
+
+    async function hentikanKamera() {
+      if (
+        !qrScanner ||
+        !cameraRunning
+      ) {
+        return;
+      }
+
+      try {
+        await qrScanner.stop();
+        await qrScanner.clear();
+      } catch (error) {
+        console.warn(error);
+      }
+
+      cameraRunning = false;
+
+      startButton.disabled = false;
+      stopButton.disabled = true;
+    }
+
+
+    async function qrBerhasilDibaca(
+      decodedText
+    ) {
+      if (scanLocked) {
+        return;
+      }
+
+      scanLocked = true;
+
+      result.style.display = 'block';
+      resultCode.textContent = decodedText;
+
+      showMessage(
+        'QR berhasil dibaca.',
+        'success'
+      );
+
+      await hentikanKamera();
+
+      window.setTimeout(function() {
+        bukaDataPeserta(decodedText);
+      }, 400);
+    }
+
+
+    function qrGagalDibaca() {
+      /*
+       Error pembacaan setiap frame tidak ditampilkan.
+       Scanner terus mencoba membaca QR.
+      */
+    }
+
+
+    async function mulaiKamera() {
+      clearMessage();
+      scanLocked = false;
+      result.style.display = 'none';
+
+      if (
+        typeof Html5Qrcode ===
+        'undefined'
+      ) {
+        showMessage(
+          'Library QR gagal dimuat. Periksa koneksi internet.',
+          'error'
+        );
+
+        return;
+      }
+
+      if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+      ) {
+        showMessage(
+          'Browser ini tidak mendukung akses kamera.',
+          'error'
+        );
+
+        return;
+      }
+
+      startButton.disabled = true;
+
+      try {
+        const cameras =
+          await Html5Qrcode.getCameras();
+
+        if (!cameras.length) {
+          throw new Error(
+            'Kamera laptop tidak ditemukan.'
+          );
+        }
+
+        const kameraBelakang =
+          cameras.find(function(camera) {
+            return /back|rear|environment/i.test(
+              camera.label
+            );
+          });
+
+        const selectedCamera =
+          kameraBelakang || cameras[0];
+
+        qrScanner =
+          new Html5Qrcode('reader');
+
+        await qrScanner.start(
+          selectedCamera.id,
+          {
+            fps: 10,
+
+            qrbox: function(
+              viewfinderWidth,
+              viewfinderHeight
+            ) {
+              const ukuran =
+                Math.floor(
+                  Math.min(
+                    viewfinderWidth,
+                    viewfinderHeight
+                  ) * 0.65
+                );
+
+              return {
+                width: ukuran,
+                height: ukuran
+              };
+            },
+
+            aspectRatio: 1.333333
+          },
+          qrBerhasilDibaca,
+          qrGagalDibaca
+        );
+
+        cameraRunning = true;
+
+        stopButton.disabled = false;
+
+        showMessage(
+          'Kamera aktif. Arahkan QR ke kotak scanner.',
+          'info'
+        );
+
+      } catch (error) {
+        startButton.disabled = false;
+        stopButton.disabled = true;
+
+        const errorText =
+          String(
+            error &&
+            error.message
+              ? error.message
+              : error
+          );
+
+        if (
+          errorText.includes('NotAllowed') ||
+          errorText.includes('Permission')
+        ) {
+          showMessage(
+            'Izin kamera ditolak. Klik ikon izin situs di browser lalu pilih Camera: Allow.',
+            'error'
+          );
+
+          return;
+        }
+
+        showMessage(
+          'Kamera gagal dibuka: ' +
+          errorText,
+          'error'
+        );
+      }
+    }
+
+
+    startButton.addEventListener(
+      'click',
+      mulaiKamera
+    );
+
+
+    stopButton.addEventListener(
+      'click',
+      hentikanKamera
+    );
+
+
+    manualButton.addEventListener(
+      'click',
+      function() {
+        bukaDataPeserta(
+          manualCode.value
+        );
+      }
+    );
+
+
+    manualCode.addEventListener(
+      'keydown',
+      function(event) {
+        if (event.key === 'Enter') {
+          bukaDataPeserta(
+            manualCode.value
+          );
+        }
+      }
+    );
+
+
+    window.addEventListener(
+      'beforeunload',
+      function() {
+        if (
+          qrScanner &&
+          cameraRunning
+        ) {
+          qrScanner.stop().catch(
+            function() {}
+          );
+        }
+      }
+    );
+  </script>
+</body>
+</html>
