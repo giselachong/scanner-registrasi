@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <title>WISE 2026 | Registrasi Ulang</title>
+  <title>WISE 2027 | Registrasi Ulang</title>
   <script defer src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     :root{font-family:Arial,Helvetica,sans-serif;color:#13243b;background:#f1f5fa;font-synthesis:none}
@@ -114,6 +114,7 @@
   const codeInput = $('manualCode'), cameraSelect = $('deviceSelect');
   const connectionDot = $('connectionDot'), connectionText = $('connectionText');
   let bridgeSource = null, bridgeOrigin = null, bridgeReady = false;
+  let backendValidated = false, backendPingStarted = false;
   const bridgeNonce = crypto.randomUUID();
   let requestSequence = 0;
   const requests = new Map();
@@ -134,7 +135,7 @@
 
   function initializeBridge() {
     if(WEB_APP_URL.includes('GANTI_DENGAN_DEPLOYMENT_ID')) {
-      connection('Atur URL Apps Script di dashboard.html','bad');
+      connection('Atur URL Apps Script di index.html','bad');
       scanMessage('Isi WEB_APP_URL dengan alamat deployment Apps Script Anda.','error');
       return;
     }
@@ -143,8 +144,8 @@
     $('bridge').src = u.href;
     connection('Menghubungkan database...');
     setTimeout(()=>{if(!bridgeReady) {
-      connection('Database belum tersambung','bad');
-      scanMessage('Buka URL Apps Script /exec secara langsung untuk otorisasi akun panitia, kemudian muat ulang dashboard. Jika tetap gagal, periksa pembatasan iframe/cookie browser.','error');
+      connection('Jembatan belum tersambung','bad');
+      scanMessage('Halaman Google Apps Script tidak merespons. Periksa FRONTEND_ORIGIN, URL /exec, izin iframe/cookie, lalu deploy ulang.','error');
     }},18000);
   }
   window.addEventListener('message', e => {
@@ -152,8 +153,22 @@
     if(!m || typeof m!=='object' || m.nonce!==bridgeNonce) return;
     if(!/^https:\/\/([a-z0-9-]+\.)*googleusercontent\.com$/.test(e.origin) && e.origin!=='https://script.google.com') return;
     if(m.type==='WISE_BRIDGE_READY') {
-      bridgeSource=e.source;bridgeOrigin=e.origin;bridgeReady=true;connection('Database terhubung','ready');
-      scanMessage('Silakan pilih kamera dan mulai scan QR.');
+      bridgeSource=e.source;bridgeOrigin=e.origin;bridgeReady=true;
+      if(!backendPingStarted){
+        backendPingStarted=true;
+        connection('Memverifikasi akses Spreadsheet...');
+        scanMessage('Jembatan aktif. Menguji izin panitia dan akses database...');
+        api('ping','').then(info=>{
+          if(!info || info.ok!==true)throw new Error('Server tidak mengonfirmasi koneksi.');
+          backendValidated=true;
+          connection('Spreadsheet WISE terhubung','ready');
+          scanMessage('Database siap. Scan QR atau masukkan ID peserta.','good');
+        }).catch(err=>{
+          backendValidated=false;
+          connection('Akses database gagal','bad');
+          scanMessage('SERVER: '+(err.message||String(err))+' — periksa PANITIA_EMAILS dan pengaturan deployment.','error');
+        });
+      }
     }
     if(m.type==='WISE_BRIDGE_RESULT' && e.source===bridgeSource && e.origin===bridgeOrigin && Number.isInteger(m.id)) {
       const active=requests.get(m.id);if(!active)return;
@@ -163,7 +178,8 @@
   });
   function api(action,code) {
     return new Promise((resolve,reject)=>{
-      if(!bridgeReady || !bridgeSource) {reject(new Error('Database belum terhubung. Periksa login Apps Script.'));return;}
+      if(!bridgeReady || !bridgeSource) {reject(new Error('Jembatan Google Apps Script belum terhubung. Periksa FRONTEND_ORIGIN/izin iframe.'));return;}
+      if(action!=='ping' && !backendValidated) {reject(new Error('Spreadsheet belum terverifikasi. Baca status koneksi di kanan atas.'));return;}
       const id=++requestSequence;
       const timer=setTimeout(()=>{requests.delete(id);reject(new Error('Koneksi server terlalu lama. Periksa database sebelum mengulang konfirmasi.'));},60000);
       requests.set(id,{resolve,reject,timer});
@@ -246,9 +262,9 @@
     clearResult();scanMessage('Mencari dan memverifikasi peserta...');
     try {
       const data=await api('lookup',code);showResult(data);scanMessage('QR valid. Data peserta ditampilkan, belum dicatat Hadir.','good');
-    }catch(e){scanMessage((e.message||String(e))+' Klik Scan Berikutnya untuk mencoba lagi.','error');$('scanNextLeft').disabled=false;}
+    }catch(e){scanMessage('PENCARIAN GAGAL: '+(e.message||String(e))+' — cek koneksi atau ID peserta, lalu coba lagi.','error');scanningBlocked=false;resumeScan();$('scanNextLeft').disabled=false;}
   }
-  function onDecoded(text){if(scanningBlocked)return;lookup(text);}
+  function onDecoded(text){if(scanningBlocked)return;scanMessage('QR berhasil terbaca. Memverifikasi ID ke Spreadsheet...');lookup(text);}
   $('manualForm').addEventListener('submit',e=>{e.preventDefault();const code=codeInput.value.trim();if(code){lookup(code);codeInput.value='';}});
   function nextScan(){if(confirming)return;scanningBlocked=false;clearResult();resumeScan();scanMessage(cameraActive?'Siap membaca QR peserta berikutnya.':'Masukkan ID peserta atau mulai kamera.','good');}
   $('next').addEventListener('click',nextScan);$('scanNextLeft').addEventListener('click',nextScan);
