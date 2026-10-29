@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>WISE 2027 — Dashboard Registrasi Ulang</title>
+  <title>WISE 2027 — Scanner QR Diagnostik V3</title>
   <style>
     :root{color-scheme:light;--blue:#16477f;--navy:#14253f;--line:#dfe6f1;--muted:#65748c;--bg:#f1f5fa;--green:#12825f;--red:#bd3449}
     *{box-sizing:border-box}body{margin:0;font:14px Arial,Helvetica,sans-serif;background:var(--bg);color:var(--navy)}
@@ -52,7 +52,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" defer></script>
 </head>
 <body>
-<header><div><strong>WISE 2026</strong><small>Dashboard Registrasi Ulang • Perbaikan QR 29-10-2026</small></div><div id="statusBar">Belum terhubung</div></header>
+<header><div><strong>WISE 2026</strong><small>Dashboard Registrasi Ulang • DIAGNOSTIK QR V3 — 29-10-2026</small></div><div id="statusBar">Belum terhubung</div></header>
 <main>
   <section class="auth" aria-label="Akses panitia">
     <div><label for="operator">Nama petugas</label><input id="operator" placeholder="Nama panitia" autocomplete="off" maxlength="60"></div>
@@ -73,7 +73,8 @@
       <div class="line" style="margin:9px 0"><button id="listBtn" class="secondary">Cari Kamera</button><button id="startBtn">Mulai Kamera</button><button id="stopBtn" class="secondary" disabled>Stop Kamera</button></div>
       <div id="videoWrap"><div id="reader"></div><div id="videoPlaceholder"><b>▣</b>Pilih kamera, lalu klik Mulai Kamera.<br>Arahkan QR ke kamera. Seluruh video dipindai.</div></div>
       <div id="scanMessage" role="status">Masukkan kunci panitia untuk menyambungkan database.</div>
-      <div id="qrReadState" role="status" aria-live="polite" style="font-size:12px;color:#415572;margin:-3px 0 8px;">Pembaca QR: belum mendeteksi kode.</div>
+      <div id="qrReadState" role="status" aria-live="polite" style="font-size:12px;color:#415572;margin:-3px 0 4px;">Pembaca QR: belum mendeteksi kode.</div>
+      <div id="diagnostic" aria-live="polite" style="font-size:12px;background:#f1f6fb;border:1px solid #d6e2f1;color:#29496c;border-radius:8px;padding:8px;margin:4px 0 8px;">Diagnostik: belum mulai. Koneksi database tidak diperlukan untuk menguji pembaca QR.</div>
       <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 8px;">
         <label for="qrImageTest" style="margin:0">Uji QR dari gambar:</label>
         <input id="qrImageTest" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Pilih gambar QR untuk uji" style="height:36px;width:min(290px,100%);padding:6px;font-size:12px">
@@ -109,6 +110,9 @@ const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzs4Q1Dyrtj2C4Z9f-L
 const $=id=>document.getElementById(id);
 let key='',connected=false,busy=false,scanner=null,cameraRunning=false,paused=false,selectedId='',current=null;
 let cameraList=[],fileScanner=null;
+let nativeDetector=null,nativeTimer=null,nativeBusy=false,decodedCount=0;
+function diagnostic(msg){$('diagnostic').textContent='Diagnostik: '+msg;console.info('[WISE QR]',msg);}
+function qrPreview(code){const s=String(code||'');return s.length>16?s.slice(0,8)+'…'+s.slice(-6):s;}
 function status(message,type=''){$('statusBar').textContent=message;$('statusBar').style.background=type==='error'?'#a5384c':type==='good'?'#097a5c':'#ffffff26';}
 function notice(message,type=''){$('scanMessage').textContent=message;$('scanMessage').className=type==='error'?'err':type==='good'?'good':'';}
 function detailNotice(message,type=''){$('detailMessage').textContent=message;$('detailMessage').className=type==='error'?'err':type==='good'?'good':'';}
@@ -182,7 +186,7 @@ async function lookup(code){
   catch(e){resetResult();notice('QR terbaca, tetapi pencarian gagal: '+e.message,'error');qrState('kode berhasil dibaca, namun belum cocok dengan database.',true);resumeCamera();}
   finally{busy=false;$('searchBtn').disabled=false;}
 }
-$('manualForm').addEventListener('submit',e=>{e.preventDefault();const input=$('manualInput');const c=input.value.trim();if(c){lookup(c);input.value='';}});
+$('manualForm').addEventListener('submit',e=>{diagnostic('Input manual digunakan untuk menguji koneksi database tanpa kamera.');e.preventDefault();const input=$('manualInput');const c=input.value.trim();if(c){lookup(c);input.value='';}});
 $('confirmBtn').addEventListener('click',async()=>{
   if(!current||!selectedId||busy||!connected)return;
   busy=true;$('confirmBtn').disabled=true;detailNotice('Sedang menyimpan status hadir ke Spreadsheet...');
@@ -215,6 +219,8 @@ function chooseCamera(){
 $('listBtn').addEventListener('click',async()=>{try{await listCameras();notice('Pilih kamera lalu klik Mulai Kamera.','good');}catch(e){notice(e.message,'error');}});
 document.querySelectorAll('input[name="camMode"]').forEach(el=>el.addEventListener('change',chooseCamera));
 async function stopCamera(){
+  if(nativeTimer){clearInterval(nativeTimer);nativeTimer=null;}
+  nativeDetector=null;nativeBusy=false;
   if(scanner&&cameraRunning){try{if(paused){scanner.resume();paused=false;}await scanner.stop();}catch(e){console.warn(e);}}
   if(scanner){try{scanner.clear();}catch(_){}}
   scanner=null;cameraRunning=false;paused=false;$('videoWrap').classList.remove('live');
@@ -222,8 +228,10 @@ async function stopCamera(){
 }
 // QR WISE resmi menyimpan token "WISE:<uuid>". ID WISE manual juga diterima.
 function onDecodedWISE(decodedText){
-  if(busy||current)return;
   const code=String(decodedText||'').replace(/[\u200B-\u200D\uFEFF]/g,'').trim();
+  decodedCount++;
+  diagnostic('QR terbaca ('+decodedCount+' kali). Panjang data: '+code.length+' karakter. Pola: '+qrPreview(code)+'.');
+  if(busy||current){qrState('QR terbaca, tetapi proses peserta masih berjalan. Klik Scan Peserta Berikutnya jika perlu.');return;}
   if(!code){qrState('ada hasil scan kosong; coba ulang.',true);return;}
   const isWiseToken=/^WISE:[0-9a-f-]{32,40}$/i.test(code);
   const isWiseId=/^WISE-[A-Z0-9-]{3,80}$/i.test(code);
@@ -251,8 +259,21 @@ $('qrImageTest').addEventListener('change',async event=>{
     const decoded=await fileScanner.scanFile(file,false);
     onDecodedWISE(decoded);
   }catch(err){
-    qrState('gambar belum bisa dibaca sebagai QR. Coba gambar lebih tajam dengan tepi putih utuh.',true);
-    notice('Gagal membaca QR dari gambar. Periksa apakah QR lengkap dan tidak buram.','error');
+    let fallbackOk=false;
+    if(typeof BarcodeDetector!=='undefined'){
+      try{
+        const detector=new BarcodeDetector({formats:['qr_code']});
+        const bitmap=await createImageBitmap(file);
+        const codes=await detector.detect(bitmap);
+        if(bitmap.close)bitmap.close();
+        if(codes.length&&codes[0].rawValue){diagnostic('Gambar QR dibaca oleh decoder cadangan.');onDecodedWISE(codes[0].rawValue);fallbackOk=true;}
+      }catch(secondError){console.warn('Decoder cadangan gambar',secondError);}
+    }
+    if(!fallbackOk){
+      diagnostic('Gagal membaca QR dari file JPG/PNG; periksa ketajaman dan margin putih.');
+      qrState('gambar belum bisa dibaca sebagai QR. Coba gambar lebih tajam dengan tepi putih utuh.',true);
+      notice('Gagal membaca QR dari gambar. Periksa apakah QR lengkap dan tidak buram.','error');
+    }
   }finally{
     if(fileScanner){try{fileScanner.clear();}catch(_){} fileScanner=null;}
     event.target.value='';
@@ -272,6 +293,29 @@ async function startCamera(){
     await scanner.start(camId,{fps:12},onDecodedWISE,()=>{});
     cameraRunning=true;$('videoWrap').classList.add('live');$('stopBtn').disabled=false;
     qrState('kamera aktif; menunggu QR di area video.');
+    const video=$('reader').querySelector('video');
+    diagnostic('Kamera aktif. Video '+(video?'terdeteksi':'belum tersedia')+'. Pembaca utama Html5Qrcode berjalan.');
+    // Browser yang mendukung BarcodeDetector mendapat mesin pembaca kedua.
+    // Tidak mengubah jalur ke database dan tidak mengirim isi QR ke pihak lain.
+    if(typeof BarcodeDetector!=='undefined'){
+      try{
+        nativeDetector=new BarcodeDetector({formats:['qr_code']});
+        nativeTimer=setInterval(async()=>{
+          if(!cameraRunning||paused||nativeBusy||busy||current||!nativeDetector)return;
+          const live=$('reader').querySelector('video');
+          if(!live||live.readyState<2)return;
+          nativeBusy=true;
+          try{
+            const codes=await nativeDetector.detect(live);
+            if(codes.length&&codes[0].rawValue){diagnostic('Decoder cadangan berhasil mengenali gambar QR.');onDecodedWISE(codes[0].rawValue);}
+          }catch(e){if(/NotSupported|Security/i.test(String(e.name))) {clearInterval(nativeTimer);nativeTimer=null;diagnostic('Decoder cadangan tidak diizinkan; decoder utama tetap aktif.');}}
+          finally{nativeBusy=false;}
+        },450);
+        diagnostic('Dua decoder aktif: Html5Qrcode + BarcodeDetector. QR dapat dibaca dari seluruh video.');
+      }catch(e){nativeDetector=null;diagnostic('Decoder utama aktif; decoder cadangan tidak didukung browser ini.');}
+    }else{
+      diagnostic('Decoder utama aktif. BarcodeDetector tambahan tidak didukung browser; uji gambar QR bila tidak terbaca.');
+    }
     notice('Kamera aktif. Arahkan QR peserta ke kamera. Pastikan seluruh QR terlihat.','good');
   }catch(e){
     notice('Gagal membuka kamera: '+e.message,'error');
