@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>WISE 2027 — Scanner Kamera V4</title>
+  <title>WISE 2027 — Scanner Kamera V5 — Fix Deteksi</title>
   <style>
     :root{color-scheme:light;--blue:#16477f;--navy:#14253f;--line:#dfe6f1;--muted:#65748c;--bg:#f1f5fa;--green:#12825f;--red:#bd3449}
     *{box-sizing:border-box}body{margin:0;font:14px Arial,Helvetica,sans-serif;background:var(--bg);color:var(--navy)}
@@ -18,7 +18,7 @@
     .grid{display:grid;grid-template-columns:1.04fr .96fr;gap:14px}.pane{padding:17px;min-width:0}
     h2{margin:0 0 12px;font-size:18px}.line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.line>button{flex:1}
     .switch{display:flex;gap:6px;align-items:center;margin:7px 0 10px;flex-wrap:wrap}.switch label{display:inline-flex;align-items:center;gap:6px;margin:0;color:#21334f;font-weight:normal;background:#eef3f9;padding:9px;border-radius:8px}.switch input{width:auto;height:auto}
-    #videoWrap{background:#0c1726;border-radius:12px;overflow:hidden;position:relative;height:min(33vh,270px);min-height:190px;display:flex;align-items:center;justify-content:center}
+    #videoWrap{background:#0c1726;border-radius:12px;overflow:hidden;position:relative;height:min(42vh,335px);min-height:265px;display:flex;align-items:center;justify-content:center}
     #cameraVideo{width:100%;height:100%;object-fit:contain;display:block;background:#0c1726}
     #frameCanvas{display:none} .scanTarget{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(52%,220px);aspect-ratio:1;border:2px solid #a4f6b8;border-radius:11px;pointer-events:none;box-shadow:0 0 0 900px #0001;display:none}
     #videoWrap.live .scanTarget{display:block}
@@ -35,13 +35,13 @@
     .empty{display:flex;align-items:center;justify-content:center;flex-direction:column;min-height:240px;text-align:center;color:var(--muted);gap:9px}
     .empty .big{font-size:55px;line-height:1}p{line-height:1.5}footer{text-align:center;font-size:11px;color:#77849b;padding:14px}
     .keyhint{font-size:11px;color:var(--muted);margin-top:5px}
-    @media(min-width:1100px) and (min-height:690px){#videoWrap{height:285px}main{margin-top:13px}.pane{padding:16px}}
+    @media(min-width:1100px) and (min-height:690px){#videoWrap{height:335px}main{margin-top:13px}.pane{padding:16px}}
     @media(min-width:900px) and (max-height:820px){
       header{padding-top:9px;padding-bottom:9px}
       main{margin-top:9px}.auth{padding:8px 12px;margin-bottom:8px}
       .auth input,.auth button{height:35px}.pane{padding:12px}
       h2{margin-bottom:7px}.switch{margin:4px 0 7px}.switch label{padding:6px 8px}
-      #cameraSelect{height:35px}#videoWrap{height:clamp(155px,27vh,218px);min-height:155px}
+      #cameraSelect{height:35px}#videoWrap{height:clamp(245px,36vh,300px);min-height:245px}
       #scanMessage,#detailMessage{margin:7px 0;min-height:31px;padding:8px}
       .manual{margin-top:7px}.manual input,.manual button{height:35px}
       .line[style]{margin-top:6px!important;margin-bottom:6px!important}
@@ -54,7 +54,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" defer></script>
 </head>
 <body>
-<header><div><strong>WISE 2026</strong><small>Dashboard Registrasi Ulang • Scanner QR V4</small></div><div id="statusBar">Belum terhubung</div></header>
+<header><div><strong>WISE 2026</strong><small>Dashboard Registrasi Ulang • Scanner QR V5 — FIX</small></div><div id="statusBar">Belum terhubung</div></header>
 <main>
   <section class="auth" aria-label="Akses panitia">
     <div><label for="operator">Nama petugas</label><input id="operator" placeholder="Nama panitia" autocomplete="off" maxlength="60"></div>
@@ -99,7 +99,7 @@
     </section>
   </div>
 </main>
-<footer>WISE 2026 • Scanner V4 • QR langsung dari kamera, tanpa unggah file • Kunci panitia tidak disimpan di GitHub.</footer>
+<footer>WISE 2026 • Scanner V5 • QR langsung dari kamera, tanpa unggah file • Kunci panitia tidak disimpan di GitHub.</footer>
 <script>
 'use strict';
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzs4Q1Dyrtj2C4Z9f-L7vvr12hxLKzcHmjd6HHRyQTJOr9S88W5uhwNZZeP5AFEkG3K/exec';
@@ -107,6 +107,7 @@ const $=id=>document.getElementById(id);
 let key='',connected=false,busy=false,cameraRunning=false,paused=false,selectedId='',current=null;
 let cameraList=[];
 let nativeDetector=null,stream=null,scanTimer=null,scannedFrames=0,decodedCount=0,jsqrFailure='';
+let lastInvalidCode='',lastInvalidAt=0;
 function diagnostic(msg){console.info('[WISE QR]',msg);}
 function qrPreview(code){const s=String(code||'');return s.length>16?s.slice(0,8)+'…'+s.slice(-6):s;}
 function status(message,type=''){$('statusBar').textContent=message;$('statusBar').style.background=type==='error'?'#a5384c':type==='good'?'#097a5c':'#ffffff26';}
@@ -174,6 +175,31 @@ function resetResult(){
 }
 function pauseCamera(){paused=true;}
 function resumeCamera(){paused=false;}
+// PENTING: fungsi ini hilang pada V4. Tanpanya hasil QR tidak pernah diteruskan ke lookup().
+function onDecodedWISE(rawValue){
+  const code=String(rawValue == null ? '' : rawValue).trim();
+  if(!code || paused || busy || current) return;
+  if(!/^WISE:/i.test(code) && !/^WISE-[A-Za-z0-9-]+$/i.test(code)){
+    const now=Date.now();
+    if(code !== lastInvalidCode || now-lastInvalidAt>5000){
+      lastInvalidCode=code;lastInvalidAt=now;
+      qrState('QR terbaca, tetapi bukan QR WISE. Pastikan QR pada kartu peserta.',true);
+      notice('Kamera mendeteksi QR yang bukan milik WISE. Tunjukkan QR pada kartu peserta.','error');
+    }
+    return;
+  }
+  decodedCount++;
+  pauseCamera(); // cegah pengiriman kode yang sama berulang kali
+  qrState('QR WISE TERBACA ('+decodedCount+' kali). Mengambil data peserta...');
+  notice('QR terbaca. Memeriksa identitas peserta...','good');
+  if(!connected){
+    qrState('QR terbaca, tetapi database belum terhubung.',true);
+    notice('Hubungkan Database dahulu menggunakan kunci panitia.','error');
+    resumeCamera();
+    return;
+  }
+  void lookup(code);
+}
 async function lookup(code){
   if(!connected){notice('Hubungkan database menggunakan kunci panitia terlebih dahulu.','error');return;}
   if(busy)return;busy=true;pauseCamera();notice('Mencari data peserta di Spreadsheet...');
@@ -191,10 +217,10 @@ $('confirmBtn').addEventListener('click',async()=>{
   catch(e){detailNotice('Status belum dapat dipastikan: '+e.message,'error');notice('Periksa Spreadsheet sebelum mengulangi konfirmasi.','error');}
   finally{busy=false;}
 });
-function nextScan(){if(busy)return;resetResult();resumeCamera();qrState('menunggu kode peserta berikutnya.');notice(cameraRunning?'Siap scan peserta berikutnya.':'Masukkan ID atau nyalakan kamera.','good');}
+function nextScan(){if(busy)return;resetResult();resumeCamera();qrState('menunggu QR peserta berikutnya (V5).');notice(cameraRunning?'Siap scan peserta berikutnya.':'Masukkan ID atau nyalakan kamera.','good');}
 $('nextBtn').addEventListener('click',nextScan);
 
-// Mesin QR V4: baca frame langsung dari video, tanpa qrbox Html5Qrcode dan tanpa upload file.
+// Mesin QR V5: baca frame langsung dari video, tanpa qrbox Html5Qrcode dan tanpa upload file.
 // Semua frame diolah di browser melalui BarcodeDetector atau jsQR.
 async function requestCameraPermission(){
   if(!navigator.mediaDevices?.getUserMedia)throw new Error('Browser tidak mendukung kamera atau halaman bukan HTTPS.');
@@ -279,7 +305,7 @@ function decodeCanvasFrame(video){
   if(found?.data)return found.data;
   // Coba pemindaian area tengah, berguna saat QR agak kecil.
   if(scannedFrames%2===0){
-    const cx=Math.round(canvas.width*0.16),cy=Math.round(canvas.height*0.1);
+    const cx=Math.round(canvas.width*0.10),cy=Math.round(canvas.height*0.06);
     const cw=canvas.width-2*cx,ch=canvas.height-2*cy;
     if(cw>80&&ch>80){
       const region=context.getImageData(cx,cy,cw,ch);
@@ -302,10 +328,9 @@ async function scanLoop(){
       }
       if(!code)code=decodeCanvasFrame(video);
       if(code){
-        qrState('QR TERBACA! Sedang mencari peserta...');
         onDecodedWISE(code);
       }else if(scannedFrames%12===0){
-        qrState('kamera dan decoder berjalan ('+scannedFrames+' frame diperiksa), belum menemukan QR. Dekatkan kartu secara perlahan sampai tajam.');
+        qrState('MESIN AKTIF — '+scannedFrames+' frame diperiksa, QR belum terbaca. Pastikan seluruh QR + tepi putih terlihat dan berada di tengah kamera.');
       }
     }
   }catch(e){
@@ -339,7 +364,7 @@ async function startCamera(){
     }catch(_){/* Tidak semua webcam dapat autofocus. */}
     cameraRunning=true;paused=false;scannedFrames=0;
     $('videoWrap').classList.add('live');$('stopBtn').disabled=false;
-    qrState('kamera aktif, decoder aktif; memeriksa QR langsung dari video.');
+    qrState('MESIN AKTIF — sedang membaca frame kamera (V5).');
     notice('Kamera aktif: '+track.label+'. Arahkan QR dengan seluruh tepi putih terlihat.','good');
     diagnostic('Video '+video.videoWidth+'x'+video.videoHeight+'; '+track.label);
     scanLoop();
