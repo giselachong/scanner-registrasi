@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>WISE 2026 — Dashboard Registrasi Ulang</title>
+  <title>WISE 2027 — Dashboard Registrasi Ulang</title>
   <style>
     :root{color-scheme:light;--blue:#16477f;--navy:#14253f;--line:#dfe6f1;--muted:#65748c;--bg:#f1f5fa;--green:#12825f;--red:#bd3449}
     *{box-sizing:border-box}body{margin:0;font:14px Arial,Helvetica,sans-serif;background:var(--bg);color:var(--navy)}
@@ -52,7 +52,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" defer></script>
 </head>
 <body>
-<header><div><strong>WISE 2026</strong><small>Dashboard Registrasi Ulang • Satu Halaman</small></div><div id="statusBar">Belum terhubung</div></header>
+<header><div><strong>WISE 2026</strong><small>Dashboard Registrasi Ulang • Satu Halaman • Versi Koneksi 29-10-2026</small></div><div id="statusBar">Belum terhubung</div></header>
 <main>
   <section class="auth" aria-label="Akses panitia">
     <div><label for="operator">Nama petugas</label><input id="operator" placeholder="Nama panitia" autocomplete="off" maxlength="60"></div>
@@ -99,7 +99,7 @@
 <footer>WISE 2026 • Kunci akses hanya disimpan sementara di memori halaman ini, tidak di GitHub.</footer>
 <script>
 'use strict';
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbztuhZOkBAJIoLNAaDUP2l9ptSATQVYelAGfj2fDvLzMHXY82BQ_4v8Mwkp6HwAG6HZ/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzs4Q1Dyrtj2C4Z9f-L7vvr12hxLKzcHmjd6HHRyQTJOr9S88W5uhwNZZeP5AFEkG3K/exec';
 const $=id=>document.getElementById(id);
 let key='',connected=false,busy=false,scanner=null,cameraRunning=false,paused=false,selectedId='',current=null;
 let cameraList=[];
@@ -139,7 +139,7 @@ async function api(action,code='') {
     }
     await sleep(700);
   }
-  throw new Error('Server tidak mengembalikan hasil. Pastikan deployment adalah versi baru, Execute as Me, dan Anyone. Buka menu Executions di Apps Script.');
+  throw new Error('Web App belum mengirim hasil pemeriksaan. Pastikan URL sudah menunjuk ke deployment yang berisi doPost dan doGet(action=result), lalu lihat menu Executions di Apps Script.');
 }
 async function connect(){
   if(busy)return;
