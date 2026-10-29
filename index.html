@@ -1,286 +1,238 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="no-referrer">
-  <title>WISE 2027 | Registrasi Ulang</title>
-  <script defer src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>WISE 2026 — Dashboard Registrasi Ulang</title>
   <style>
-    :root{font-family:Arial,Helvetica,sans-serif;color:#13243b;background:#f1f5fa;font-synthesis:none}
-    *{box-sizing:border-box}body{margin:0;min-height:100dvh}
-    button,input,select{font:inherit}button{border:0;cursor:pointer;border-radius:10px;font-weight:700;padding:11px 14px;transition:filter .12s}
-    button:hover:not(:disabled){filter:brightness(.96)}button:disabled{opacity:.48;cursor:not-allowed}
-    .primary{background:#1758b5;color:#fff}.dark{background:#253b57;color:#fff}.light{background:#e8eff8;color:#164681}.success{background:#0b7e59;color:white}
-    .shell{max-width:1460px;padding:14px 20px;margin:0 auto;display:flex;flex-direction:column;gap:11px;min-height:100dvh}
-    .header{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:56px}
-    .brand{display:flex;align-items:center;gap:10px}.brand-mark{width:44px;height:44px;display:grid;place-items:center;background:#164782;color:white;border-radius:12px;font-size:21px;font-weight:900}
-    h1{font-size:24px;margin:0;color:#153f79}h2{font-size:18px;margin:0}p{margin:0;color:#52647e}small,.muted{color:#64758c}
-    .status-pill{display:inline-flex;align-items:center;gap:8px;border-radius:99px;background:white;padding:9px 12px;font-size:12px;font-weight:bold;border:1px solid #dae3f0}
-    .dot{width:8px;height:8px;border-radius:50%;background:#d18d24}.dot.ready{background:#169361}.dot.bad{background:#c13445}
-    .toolbar{display:grid;grid-template-columns:minmax(170px,1fr) minmax(170px,1fr) minmax(170px,1fr) auto auto;gap:8px;align-items:end;background:white;border-radius:16px;padding:12px 15px;border:1px solid #e3eaf2}
-    .field{display:flex;flex-direction:column;gap:6px}.field label{font-size:12px;font-weight:700;color:#415572}
-    select,input{border:1px solid #c9d5e5;background:#fff;border-radius:9px;padding:11px 12px;height:44px;min-width:0;width:100%;color:#172b47}
-    .choice{display:flex;gap:6px}.choice label{display:flex;align-items:center;gap:7px;white-space:nowrap;padding:12px 10px;background:#e9f0fa;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;min-height:44px;flex:1}
-    .choice input{height:15px;width:15px;accent-color:#1758b5;flex:none}
-    .workspace{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(340px,.9fr);gap:12px;flex:1;min-height:0}
-    .panel{background:white;border-radius:16px;border:1px solid #e3eaf2;padding:15px;min-width:0;display:flex;flex-direction:column;gap:12px;min-height:0}
-    .panel-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.chip{font-size:12px;background:#edf3fc;color:#244f85;padding:6px 10px;border-radius:99px;font-weight:bold}
-    .video-frame{flex:1;min-height:275px;background:#122c49;border-radius:12px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
-    #reader{width:100%;height:100%;min-height:275px;overflow:hidden;position:relative;z-index:1;border:0!important}
-    #reader video{width:100%!important;height:100%!important;max-height:100%!important;object-fit:cover!important}
-    #reader img{max-height:50px}.camera-hint{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#dce9f8;z-index:2;pointer-events:none;padding:30px;background:#122c49}
-    .camera-hint .icon{font-size:54px;margin-bottom:12px}.camera-hint strong{display:block;font-size:17px;margin-bottom:9px}
-    .foot-row{display:flex;gap:8px;align-items:center;justify-content:space-between;min-height:42px}
-    .info{font-size:13px;font-weight:700;line-height:1.35;color:#4e627c}.info.error{color:#b5273e}.info.good{color:#0b8056}
-    .result{display:flex;flex-direction:column;gap:13px;flex:1;min-height:0}
-    .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;flex:1;gap:9px;color:#536782;background:#f5f8fc;border:1px dashed #cbd6e5;border-radius:12px;padding:18px}
-    .empty .icon{font-size:44px}.empty strong{color:#314e75}
-    .participant{display:none;flex-direction:column;gap:12px;flex:1;min-height:0}
-    .identity{display:flex;gap:14px;align-items:center;padding:12px;background:#f3f7fd;border-radius:12px}
-    .photo{height:120px;width:90px;object-fit:cover;border-radius:8px;border:1px solid #d9e2ee;background:#e2eaf5;display:none}
-    .no-photo{height:120px;width:90px;border-radius:8px;display:grid;place-items:center;background:#e2eaf5;font-size:36px;flex:none}
-    .idlabel{font-size:11px;color:#66758a;font-weight:700;letter-spacing:.5px;margin-bottom:5px}.idtext{font-size:13px;color:#0e539c;font-weight:900;word-break:break-word}
-    .person-name{font-size:20px;font-weight:800;margin:5px 0;overflow-wrap:anywhere}
-    .badge{font-weight:bold;font-size:12px;border-radius:99px;display:inline-block;padding:7px 10px;background:#fff3d5;color:#926019}
-    .badge.attended{background:#d7f7e9;color:#086d4c}
-    .details{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-    .detail{background:#f7f9fc;border:1px solid #ecf1f7;border-radius:9px;padding:10px;min-width:0}
-    .detail span{display:block;font-size:11px;color:#63748b;margin-bottom:5px}.detail strong{font-size:14px;overflow-wrap:anywhere}
-    .actions{margin-top:auto;display:flex;gap:9px}.actions button{flex:1;min-height:45px}
-    .manual{display:flex;align-items:end;gap:8px}.manual .field{flex:1}.manual button{height:44px;white-space:nowrap}
-    .bottom-note{text-align:center;color:#748197;font-size:11px;line-height:1.4}
-    #bridge{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:0;border:0}
-    @media(min-width:1000px){html,body{height:100%}.shell{height:100dvh;min-height:650px}.workspace{overflow:hidden}.panel{overflow:hidden}}
-    @media(max-width:1120px){.toolbar{grid-template-columns:1fr 1fr auto auto}.toolbar .field.device{grid-column:1 / span 2}.workspace{grid-template-columns:1fr 1fr}}
-    @media(max-width:880px){.shell{padding:10px;min-height:100dvh}.header{align-items:flex-start}.header h1{font-size:21px}.toolbar{grid-template-columns:1fr 1fr}.toolbar .field.device{grid-column:auto}.toolbar>button{width:100%}.workspace{grid-template-columns:1fr}.video-frame{height:330px;flex:none}.panel{min-height:0}.result{min-height:300px}}
-    @media(max-width:520px){.toolbar{grid-template-columns:1fr 1fr}.field.device{grid-column:1 / -1!important}.choice{flex-direction:column}.choice label{padding:8px;min-height:34px}.identity{align-items:flex-start}.details{grid-template-columns:1fr 1fr}.actions{flex-direction:column}}
+    :root{color-scheme:light;--blue:#16477f;--navy:#14253f;--line:#dfe6f1;--muted:#65748c;--bg:#f1f5fa;--green:#12825f;--red:#bd3449}
+    *{box-sizing:border-box}body{margin:0;font:14px Arial,Helvetica,sans-serif;background:var(--bg);color:var(--navy)}
+    header{background:var(--blue);color:white;padding:14px max(24px,calc((100vw - 1200px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px}
+    header strong{font-size:23px;letter-spacing:.6px}header small{display:block;opacity:.8;margin-top:2px}
+    #statusBar{border-radius:18px;padding:7px 11px;background:#ffffff26;max-width:58%;text-align:right}
+    main{max-width:1240px;margin:16px auto;padding:0 16px} .auth,.pane{background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 15px #12284c0c}
+    .auth{display:flex;align-items:end;gap:10px;padding:14px;margin-bottom:12px;flex-wrap:wrap}.auth>div{flex:1;min-width:160px}
+    label{display:block;font-size:12px;color:var(--muted);font-weight:bold;margin-bottom:6px}
+    input,select{width:100%;height:40px;border:1px solid #bbc9db;background:white;border-radius:9px;padding:0 10px;font-size:14px;color:var(--navy)}
+    button{height:40px;cursor:pointer;border:0;border-radius:9px;padding:0 14px;background:var(--blue);color:#fff;font-size:13px;font-weight:bold}
+    button:disabled{cursor:not-allowed;opacity:.43}.secondary{background:#e9f0f8;color:#184776}.danger{background:#a5384c}.success{background:var(--green)}
+    .grid{display:grid;grid-template-columns:1.04fr .96fr;gap:14px}.pane{padding:17px;min-width:0}
+    h2{margin:0 0 12px;font-size:18px}.line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.line>button{flex:1}
+    .switch{display:flex;gap:6px;align-items:center;margin:7px 0 10px;flex-wrap:wrap}.switch label{display:inline-flex;align-items:center;gap:6px;margin:0;color:#21334f;font-weight:normal;background:#eef3f9;padding:9px;border-radius:8px}.switch input{width:auto;height:auto}
+    #videoWrap{background:#0c1726;border-radius:12px;overflow:hidden;position:relative;height:min(33vh,270px);min-height:190px;display:flex;align-items:center;justify-content:center}
+    #reader{width:100%;height:100%;color:white}#reader video{width:100%!important;max-height:100%!important;object-fit:cover!important}
+    #videoPlaceholder{position:absolute;color:#cad7e8;text-align:center;pointer-events:none;padding:18px}#videoPlaceholder b{display:block;font-size:35px;margin-bottom:7px}
+    #videoWrap.live #videoPlaceholder{display:none}
+    #scanMessage,#detailMessage{padding:10px 11px;border-radius:9px;background:#eef3f9;color:#345173;min-height:36px;margin:10px 0;line-height:1.45;font-size:13px}
+    #scanMessage.err,#detailMessage.err{background:#fbecef;color:var(--red)}
+    #scanMessage.good,#detailMessage.good{background:#e8f8f1;color:#09714f}
+    .manual{margin-top:12px;display:flex;gap:7px}.manual input{flex:1}.manual button{flex:none}
+    .participant{display:none} .participant.show{display:block}.details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:12px 0}
+    .detail{border-bottom:1px solid var(--line);padding:3px 0 8px;min-width:0}.detail small{display:block;color:var(--muted);margin-bottom:5px;font-size:11px}
+    .detail strong{font-size:15px;overflow-wrap:anywhere}.detail.wide{grid-column:1/-1}
+    .att{display:inline-block;padding:8px 11px;border-radius:8px;background:#fff3de;color:#965200;font-weight:bold}.att.hadir{background:#e4f7ef;color:#067047}
+    .empty{display:flex;align-items:center;justify-content:center;flex-direction:column;min-height:240px;text-align:center;color:var(--muted);gap:9px}
+    .empty .big{font-size:55px;line-height:1}p{line-height:1.5}footer{text-align:center;font-size:11px;color:#77849b;padding:14px}
+    .keyhint{font-size:11px;color:var(--muted);margin-top:5px}
+    @media(min-width:1100px) and (min-height:690px){#videoWrap{height:285px}main{margin-top:13px}.pane{padding:16px}}
+    @media(min-width:900px) and (max-height:820px){
+      header{padding-top:9px;padding-bottom:9px}
+      main{margin-top:9px}.auth{padding:8px 12px;margin-bottom:8px}
+      .auth input,.auth button{height:35px}.pane{padding:12px}
+      h2{margin-bottom:7px}.switch{margin:4px 0 7px}.switch label{padding:6px 8px}
+      #cameraSelect{height:35px}#videoWrap{height:clamp(155px,27vh,218px);min-height:155px}
+      #scanMessage,#detailMessage{margin:7px 0;min-height:31px;padding:8px}
+      .manual{margin-top:7px}.manual input,.manual button{height:35px}
+      .line[style]{margin-top:6px!important;margin-bottom:6px!important}
+      .line button{height:35px}footer{padding:8px}
+      .details{gap:7px;margin:8px 0}.detail{padding-bottom:5px}
+    }
+    @media(max-width:850px){.grid{grid-template-columns:1fr}#videoWrap{height:290px}header{padding:13px 16px}.auth{align-items:stretch}.auth button{align-self:end}}
+    @media(max-width:430px){.manual{flex-wrap:wrap}.manual button{width:100%}.details{gap:8px}.details strong{font-size:13px}}
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" defer></script>
 </head>
 <body>
-  <main class="shell">
-    <header class="header">
-      <div class="brand"><div class="brand-mark">W</div><div><h1>WISE 2026</h1><p style="font-size:13px">Dashboard registrasi ulang peserta</p></div></div>
-      <div class="status-pill"><span id="connectionDot" class="dot"></span><span id="connectionText">Menghubungkan database...</span></div>
-    </header>
-    <section class="toolbar" aria-label="Pengaturan kamera">
-      <div class="field" style="grid-column:auto"><label>Sumber kamera</label>
-        <div class="choice">
-          <label><input type="radio" name="cameraType" value="internal" checked>Kamera Laptop</label>
-          <label><input type="radio" name="cameraType" value="external">USB Eksternal</label>
-        </div>
+<header><div><strong>WISE 2026</strong><small>Dashboard Registrasi Ulang • Satu Halaman</small></div><div id="statusBar">Belum terhubung</div></header>
+<main>
+  <section class="auth" aria-label="Akses panitia">
+    <div><label for="operator">Nama petugas</label><input id="operator" placeholder="Nama panitia" autocomplete="off" maxlength="60"></div>
+    <div style="flex:2"><label for="accessKey">Kunci akses panitia (dari Apps Script)</label><input id="accessKey" type="password" placeholder="Tempel kunci rahasia di sini" autocomplete="off"></div>
+    <button id="connectBtn" type="button">Hubungkan Database</button>
+    <button id="logoutBtn" class="secondary" type="button">Keluar</button>
+  </section>
+  <div class="grid">
+    <section class="pane">
+      <h2>1. Pindai QR Peserta</h2>
+      <label>Jenis kamera</label>
+      <div class="switch">
+        <label><input type="radio" name="camMode" value="laptop" checked> Kamera laptop</label>
+        <label><input type="radio" name="camMode" value="usb"> Kamera USB eksternal</label>
+        <label><input type="radio" name="camMode" value="pilih"> Pilih kamera</label>
       </div>
-      <div class="field device"><label for="deviceSelect">Perangkat kamera</label><select id="deviceSelect"><option value="">Otomatis sesuai pilihan</option></select></div>
-      <div class="field"><label for="manualCode">Input QR / ID WISE manual</label><form id="manualForm" class="manual"><input id="manualCode" autocomplete="off" placeholder="WISE-... / WISE:..."><button class="light" type="submit">Cari</button></form></div>
-      <button class="primary" type="button" id="startCamera">▶ Mulai Kamera</button>
-      <button class="dark" type="button" id="stopCamera" disabled>■ Stop</button>
+      <select id="cameraSelect" aria-label="Daftar kamera"><option value="">Klik Cari Kamera</option></select>
+      <div class="line" style="margin:9px 0"><button id="listBtn" class="secondary">Cari Kamera</button><button id="startBtn">Mulai Kamera</button><button id="stopBtn" class="secondary" disabled>Stop Kamera</button></div>
+      <div id="videoWrap"><div id="reader"></div><div id="videoPlaceholder"><b>▣</b>Pilih kamera, lalu klik Mulai Kamera.<br>Arahkan QR ke kotak pemindaian.</div></div>
+      <div id="scanMessage" role="status">Masukkan kunci panitia untuk menyambungkan database.</div>
+      <form class="manual" id="manualForm"><input id="manualInput" placeholder="Atau masukkan ID: WISE-AA-55-001 / WISE:..." autocomplete="off" required><button type="submit" id="searchBtn">Cari ID</button></form>
+      <div class="line" style="margin-top:9px"><button id="nextBtn" class="secondary" disabled>Scan Peserta Berikutnya</button></div>
     </section>
-    <section class="workspace">
-      <div class="panel">
-        <div class="panel-top"><h2>Scan QR Code Peserta</h2><span id="cameraState" class="chip">Kamera belum aktif</span></div>
-        <div class="video-frame"><div id="reader"></div><div class="camera-hint" id="cameraHint"><div><div class="icon">▣</div><strong>Kamera siap digunakan</strong><span>Pilih kamera lalu klik Mulai Kamera</span></div></div></div>
-        <div class="foot-row"><span id="scanInfo" class="info" role="status" aria-live="polite">QR diproses untuk menampilkan identitas peserta.</span><button id="scanNextLeft" type="button" class="light" disabled>Scan Berikutnya</button></div>
-      </div>
-      <div class="panel">
-        <div class="panel-top"><h2>Data Peserta</h2><span class="chip">Konfirmasi manual</span></div>
-        <div class="result">
-          <div class="empty" id="emptyResult"><div class="icon">▤</div><strong>Belum ada peserta dipindai</strong><div>Setelah QR terbaca, identitas peserta akan muncul di sini. Scan tidak langsung mencatat kehadiran.</div></div>
-          <div class="participant" id="participant" aria-live="polite">
-            <div class="identity">
-              <img class="photo" id="photo" alt="Pas foto peserta">
-              <div id="photoPlaceholder" class="no-photo" aria-hidden="true">👤</div>
-              <div style="min-width:0"><div class="idlabel">NOMOR PESERTA</div><div id="id" class="idtext">—</div><div id="name" class="person-name">—</div><span class="badge" id="attendBadge">Belum Hadir</span></div>
-            </div>
-            <div class="details">
-              <div class="detail"><span>Asal sekolah</span><strong id="school">—</strong></div>
-              <div class="detail"><span>Jenis perlombaan</span><strong id="competition">—</strong></div>
-              <div class="detail"><span>Tingkatan</span><strong id="level">—</strong></div>
-              <div class="detail"><span>Kelas peserta</span><strong id="class">—</strong></div>
-            </div>
-            <div id="previewMessage" class="info">Periksa identitas sebelum mengonfirmasi.</div>
-            <div class="actions"><button class="success" type="button" id="confirm" disabled>✓ Konfirmasi Kehadiran</button><button class="light" type="button" id="next" disabled>Scan Berikutnya →</button></div>
-          </div>
+    <section class="pane">
+      <h2>2. Verifikasi & Konfirmasi</h2>
+      <div id="empty" class="empty"><div class="big">▤</div><b>Belum ada peserta dipindai</b><p>Setelah QR terbaca atau ID dimasukkan, data peserta akan muncul di sini.</p></div>
+      <div id="participant" class="participant">
+        <div><span id="attendance" class="att">BELUM HADIR</span></div>
+        <div class="details">
+          <div class="detail wide"><small>Nomor Peserta</small><strong id="pId">—</strong></div>
+          <div class="detail wide"><small>Nama Lengkap</small><strong id="pName">—</strong></div>
+          <div class="detail"><small>Kelas</small><strong id="pClass">—</strong></div>
+          <div class="detail"><small>Tingkatan</small><strong id="pLevel">—</strong></div>
+          <div class="detail wide"><small>Asal Sekolah</small><strong id="pSchool">—</strong></div>
+          <div class="detail wide"><small>Jenis Lomba</small><strong id="pLomba">—</strong></div>
+          <div class="detail wide"><small>Waktu Kehadiran</small><strong id="pTime">—</strong></div>
         </div>
+        <div id="detailMessage">Periksa identitas peserta sebelum konfirmasi.</div>
+        <button class="success" id="confirmBtn" type="button" style="width:100%" disabled>✓ Konfirmasi Kehadiran</button>
       </div>
     </section>
-    <div class="bottom-note">WISE 2026 • Kamera hanya aktif setelah petugas mengizinkan akses • Data kehadiran tersimpan setelah konfirmasi panitia</div>
-  </main>
-  <iframe id="bridge" title="Koneksi aman Google Apps Script" loading="eager"></iframe>
+  </div>
+</main>
+<footer>WISE 2026 • Kunci akses hanya disimpan sementara di memori halaman ini, tidak di GitHub.</footer>
 <script>
-  /* KONFIGURASI: GANTI URL DI BAWAH DENGAN URL /exec DEPLOYMENT GOOGLE APPS SCRIPT ANDA. */
-  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzlAS_ysWur_z1l-Oya5NAe1gw9tu5gEobMPfQal377fz65kLkPzzbQur8J126prpd9/exec';
-
-  const $ = id => document.getElementById(id);
-  const codeInput = $('manualCode'), cameraSelect = $('deviceSelect');
-  const connectionDot = $('connectionDot'), connectionText = $('connectionText');
-  let bridgeSource = null, bridgeOrigin = null, bridgeReady = false;
-  let backendValidated = false, backendPingStarted = false;
-  const bridgeNonce = crypto.randomUUID();
-  let requestSequence = 0;
-  const requests = new Map();
-  let scanner = null, cameraActive = false, scannerPaused = false, scanningBlocked = false;
-  let availableCameras = [], selectedCode = '', lastResult = null, confirming = false;
-  const cameraTypes = () => document.querySelector('input[name="cameraType"]:checked').value;
-  const isExternal = label => /usb|external|logitech|brio|webcam|c920|c922|hd pro/i.test(label);
-  const isInternal = label => /integrated|built.?in|internal|facetime|laptop|front|user facing/i.test(label);
-
-  function connection(text, state='waiting') {
-    connectionText.textContent=text;
-    connectionDot.className='dot'+(state==='ready'?' ready':state==='bad'?' bad':'');
-  }
-  function scanMessage(text, kind='normal') {$('scanInfo').textContent=text;$('scanInfo').className='info'+(kind==='error'?' error':kind==='good'?' good':'');}
-  function setCamState(text) {$('cameraState').textContent=text;}
-  function showHint(show) {$('cameraHint').hidden=!show;$('cameraHint').style.display=show?'grid':'none';}
-  function setBusyButtons(busy) {$('confirm').disabled=busy || !lastResult || String(lastResult.status).toLowerCase()==='hadir';}
-
-  function initializeBridge() {
-    if(WEB_APP_URL.includes('GANTI_DENGAN_DEPLOYMENT_ID')) {
-      connection('Atur URL Apps Script di index.html','bad');
-      scanMessage('Isi WEB_APP_URL dengan alamat deployment Apps Script Anda.','error');
-      return;
-    }
-    const u = new URL(WEB_APP_URL);
-    u.searchParams.set('nonce',bridgeNonce);
-    $('bridge').src = u.href;
-    connection('Menghubungkan database...');
-    setTimeout(()=>{if(!bridgeReady) {
-      connection('Jembatan belum tersambung','bad');
-      scanMessage('Halaman Google Apps Script tidak merespons. Periksa FRONTEND_ORIGIN, URL /exec, izin iframe/cookie, lalu deploy ulang.','error');
-    }},18000);
-  }
-  window.addEventListener('message', e => {
-    const m=e.data;
-    if(!m || typeof m!=='object' || m.nonce!==bridgeNonce) return;
-    if(!/^https:\/\/([a-z0-9-]+\.)*googleusercontent\.com$/.test(e.origin) && e.origin!=='https://script.google.com') return;
-    if(m.type==='WISE_BRIDGE_READY') {
-      bridgeSource=e.source;bridgeOrigin=e.origin;bridgeReady=true;
-      if(!backendPingStarted){
-        backendPingStarted=true;
-        connection('Memverifikasi akses Spreadsheet...');
-        scanMessage('Jembatan aktif. Menguji izin panitia dan akses database...');
-        api('ping','').then(info=>{
-          if(!info || info.ok!==true)throw new Error('Server tidak mengonfirmasi koneksi.');
-          backendValidated=true;
-          connection('Spreadsheet WISE terhubung','ready');
-          scanMessage('Database siap. Scan QR atau masukkan ID peserta.','good');
-        }).catch(err=>{
-          backendValidated=false;
-          connection('Akses database gagal','bad');
-          scanMessage('SERVER: '+(err.message||String(err))+' — periksa PANITIA_EMAILS dan pengaturan deployment.','error');
-        });
-      }
-    }
-    if(m.type==='WISE_BRIDGE_RESULT' && e.source===bridgeSource && e.origin===bridgeOrigin && Number.isInteger(m.id)) {
-      const active=requests.get(m.id);if(!active)return;
-      clearTimeout(active.timer);requests.delete(m.id);
-      if(m.ok)active.resolve(m.data);else active.reject(new Error(m.error||'Permintaan ditolak server'));
-    }
+'use strict';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbztuhZOkBAJIoLNAaDUP2l9ptSATQVYelAGfj2fDvLzMHXY82BQ_4v8Mwkp6HwAG6HZ/exec';
+const $=id=>document.getElementById(id);
+let key='',connected=false,busy=false,scanner=null,cameraRunning=false,paused=false,selectedId='',current=null;
+let cameraList=[];
+function status(message,type=''){$('statusBar').textContent=message;$('statusBar').style.background=type==='error'?'#a5384c':type==='good'?'#097a5c':'#ffffff26';}
+function notice(message,type=''){$('scanMessage').textContent=message;$('scanMessage').className=type==='error'?'err':type==='good'?'good':'';}
+function detailNotice(message,type=''){$('detailMessage').textContent=message;$('detailMessage').className=type==='error'?'err':type==='good'?'good':'';}
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+// Tanpa iframe dan tanpa menaruh kata sandi di alamat URL:
+// kirim POST no-cors, kemudian ambil hasil singkat lewat tag script JSONP dengan ticket random.
+function jsonpResult(ticket,attempt) {
+  return new Promise((resolve,reject)=>{
+    const cb='wiseResult_'+ticket.replace(/-/g,'')+'_'+attempt;
+    const script=document.createElement('script');let settled=false;
+    const cleanup=()=>{script.remove();delete window[cb];clearTimeout(timeout);};
+    window[cb]=data=>{if(settled)return;settled=true;cleanup();resolve(data);};
+    script.onerror=()=>{if(settled)return;settled=true;cleanup();reject(new Error('Tidak bisa membaca respons Apps Script. Periksa URL deployment dan akses Anyone.'));};
+    const timeout=setTimeout(()=>{if(settled)return;settled=true;cleanup();reject(new Error('Respons Apps Script terlalu lama.'));},7000);
+    const url=new URL(WEB_APP_URL);url.searchParams.set('action','result');
+    url.searchParams.set('ticket',ticket);url.searchParams.set('callback',cb);url.searchParams.set('_',String(Date.now()));
+    script.src=url.href;document.head.appendChild(script);
   });
-  function api(action,code) {
-    return new Promise((resolve,reject)=>{
-      if(!bridgeReady || !bridgeSource) {reject(new Error('Jembatan Google Apps Script belum terhubung. Periksa FRONTEND_ORIGIN/izin iframe.'));return;}
-      if(action!=='ping' && !backendValidated) {reject(new Error('Spreadsheet belum terverifikasi. Baca status koneksi di kanan atas.'));return;}
-      const id=++requestSequence;
-      const timer=setTimeout(()=>{requests.delete(id);reject(new Error('Koneksi server terlalu lama. Periksa database sebelum mengulang konfirmasi.'));},60000);
-      requests.set(id,{resolve,reject,timer});
-      bridgeSource.postMessage({type:'WISE_BRIDGE_REQUEST',nonce:bridgeNonce,id,action,code},bridgeOrigin);
-    });
-  }
-  function pickCamera() {
-    if(cameraSelect.value) return cameraSelect.value;
-    if(availableCameras.length===1) return availableCameras[0].id;
-    const type=cameraTypes();
-    const cam=(type==='external'?availableCameras.find(c=>isExternal(c.label)):availableCameras.find(c=>isInternal(c.label)));
-    if(cam){cameraSelect.value=cam.id;return cam.id;}
-    return null;
-  }
-  async function discoverCameras() {
-    if(typeof Html5Qrcode==='undefined')throw new Error('Library QR belum termuat. Periksa internet/CDN.');
-    const list=await Html5Qrcode.getCameras();
-    availableCameras=list;
-    const manuallySelected = cameraSelect.value;
-    cameraSelect.innerHTML='<option value="">Otomatis sesuai pilihan</option>';
-    list.forEach((cam,i)=>{const opt=document.createElement('option');opt.value=cam.id;opt.textContent=cam.label||`Kamera ${i+1}`;cameraSelect.appendChild(opt);});
-    if(manuallySelected && list.some(c=>c.id===manuallySelected))cameraSelect.value=manuallySelected;
-    if(!list.length)throw new Error('Tidak ada kamera yang ditemukan.');
-    const chosen=pickCamera();
-    if(!chosen&&list.length>1)scanMessage('Kamera tidak dapat dibedakan otomatis. Pilih nama perangkat dari daftar di atas.','error');
-    return chosen;
-  }
-  async function stopCamera() {
-    $('stopCamera').disabled=true;
-    if(scanner && cameraActive) {
-      try {await scanner.stop();}catch(e){scanMessage('Gagal menghentikan kamera: '+(e.message||e),'error');}
+}
+async function api(action,code='') {
+  if(!key)throw new Error('Masukkan kunci akses panitia dahulu.');
+  const ticket=crypto.randomUUID(),createdAt=Date.now();
+  const payload={ticket,createdAt,key,action,code,operator:$('operator').value.trim()||'Panitia'};
+  try {
+    // Google Apps Script tidak memberi Access-Control-Allow-Origin. no-cors adalah
+    // mode kirim saja: keberhasilan diverifikasi via hasil JSONP, bukan status fetch.
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),redirect:'follow'});
+  } catch(e) {throw new Error('POST ke Apps Script gagal. Periksa koneksi internet / URL Web App. '+e.message);}
+  for(let i=0;i<24;i++) {
+    const result=await jsonpResult(ticket,i);
+    if(result.ready) {
+      if(!result.ok)throw new Error(result.error||'Server menolak permintaan.');
+      return result.data;
     }
-    cameraActive=false;scannerPaused=false;showHint(true);setCamState('Kamera berhenti');
-    $('startCamera').disabled=false;
-    $('stopCamera').disabled=true;
+    await sleep(700);
   }
-  async function startCamera() {
-    $('startCamera').disabled=true;
-    scanMessage('Meminta izin kamera...');
-    try {
-      if(cameraActive)await stopCamera();
-      const cam=await discoverCameras();
-      if(!cam)throw new Error('Pilih kamera di daftar perangkat, lalu klik Mulai Kamera.');
-      if(!scanner)scanner=new Html5Qrcode('reader',{formatsToSupport:[Html5QrcodeSupportedFormats.QR_CODE],verbose:false});
-      await scanner.start(cam,{fps:12,qrbox:(width,height)=>{const v=Math.max(140,Math.min(250,width-30,height-30));return{width:v,height:v};}},onDecoded,()=>{});
-      cameraActive=true;showHint(false);setCamState('● Kamera aktif');
-      $('stopCamera').disabled=false;
-      scanMessage('Kamera aktif. Arahkan QR Code ke kotak pemindaian.','good');
-    }catch(err){scanMessage('Kamera tidak dapat dimulai: '+(err.message||err)+'. Pastikan izin browser dan kamera tidak digunakan aplikasi lain.','error');showHint(true);setCamState('Kamera gagal aktif');}
-    finally {$('startCamera').disabled=false;}
-  }
-  $('startCamera').addEventListener('click', startCamera);
-  $('stopCamera').addEventListener('click', stopCamera);
-  document.querySelectorAll('input[name="cameraType"]').forEach(r=>r.addEventListener('change',async()=>{
-    cameraSelect.value='';if(cameraActive){await stopCamera();await startCamera();}else if(availableCameras.length)pickCamera();
-  }));
-  cameraSelect.addEventListener('change',async()=>{if(cameraActive){await stopCamera();await startCamera();}});
+  throw new Error('Server tidak mengembalikan hasil. Pastikan deployment adalah versi baru, Execute as Me, dan Anyone. Buka menu Executions di Apps Script.');
+}
+async function connect(){
+  if(busy)return;
+  const entered=$('accessKey').value.trim();if(!entered){notice('Kunci panitia belum diisi.','error');return;}
+  key=entered;busy=true;$('connectBtn').disabled=true;status('Menghubungkan...');
+  try{const info=await api('ping');connected=true;status('✓ '+info.pesan,'good');notice('Database terhubung. Pilih kamera atau masukkan ID.','good');$('accessKey').value='';}
+  catch(e){connected=false;status('Akses Database Gagal','error');notice(e.message,'error');}
+  finally{busy=false;$('connectBtn').disabled=false;}
+}
+$('connectBtn').addEventListener('click',connect);
+$('accessKey').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();connect();}});
+$('logoutBtn').addEventListener('click',()=>{key='';connected=false;current=null;selectedId='';$('accessKey').value='';resetResult();status('Belum terhubung');notice('Sesi panitia dihapus. Masukkan kunci untuk menyambungkan ulang.');});
+function render(kartu,message){
+  current=kartu;selectedId=kartu.id;
+  const fields={pId:kartu.id,pName:kartu.nama,pClass:kartu.kelas,pSchool:kartu.sekolah,pLomba:kartu.lomba,pLevel:kartu.tingkatan,pTime:kartu.waktu};
+  Object.keys(fields).forEach(id=>$(id).textContent=fields[id]||'—');
+  const hadir=String(kartu.status||'').trim().toLowerCase()==='hadir';
+  $('attendance').className=hadir?'att hadir':'att';$('attendance').textContent=hadir?'SUDAH HADIR':'BELUM HADIR';
+  $('empty').style.display='none';$('participant').classList.add('show');$('confirmBtn').disabled=hadir;
+  $('nextBtn').disabled=false;detailNotice(message,hadir?'error':'good');
+}
+function resetResult(){
+  current=null;selectedId='';$('participant').classList.remove('show');$('empty').style.display='flex';
+  $('confirmBtn').disabled=true;$('nextBtn').disabled=true;
+}
+function pauseCamera(){if(scanner&&cameraRunning&&!paused){try{scanner.pause(true);paused=true;}catch(_){}}}
+function resumeCamera(){if(scanner&&cameraRunning&&paused){try{scanner.resume();paused=false;}catch(_){}}}
+async function lookup(code){
+  if(!connected){notice('Hubungkan database menggunakan kunci panitia terlebih dahulu.','error');return;}
+  if(busy)return;busy=true;pauseCamera();notice('Mencari data peserta di Spreadsheet...');
+  $('searchBtn').disabled=true;$('confirmBtn').disabled=true;
+  try{const result=await api('lookup',code);render(result.kartu,result.pesan);notice('Data peserta berhasil ditemukan.','good');}
+  catch(e){resetResult();notice(e.message,'error');resumeCamera();}
+  finally{busy=false;$('searchBtn').disabled=false;}
+}
+$('manualForm').addEventListener('submit',e=>{e.preventDefault();const input=$('manualInput');const c=input.value.trim();if(c){lookup(c);input.value='';}});
+$('confirmBtn').addEventListener('click',async()=>{
+  if(!current||!selectedId||busy||!connected)return;
+  busy=true;$('confirmBtn').disabled=true;detailNotice('Sedang menyimpan status hadir ke Spreadsheet...');
+  try{const id=selectedId;const result=await api('confirm',id);
+    if(id!==selectedId)return;render(result.kartu,result.pesan);notice('✓ '+result.pesan,'good');}
+  catch(e){detailNotice('Status belum dapat dipastikan: '+e.message,'error');notice('Periksa Spreadsheet sebelum mengulangi konfirmasi.','error');}
+  finally{busy=false;}
+});
+function nextScan(){if(busy)return;resetResult();resumeCamera();notice(cameraRunning?'Siap scan peserta berikutnya.':'Masukkan ID atau nyalakan kamera.','good');}
+$('nextBtn').addEventListener('click',nextScan);
 
-  function pauseScan(){if(cameraActive&&!scannerPaused){try{scanner.pause(false);scannerPaused=true;}catch(e){}}}
-  function resumeScan(){if(cameraActive&&scannerPaused){try{scanner.resume();scannerPaused=false;}catch(e){}}}
-  function clearResult(){lastResult=null;selectedCode='';$('participant').style.display='none';$('emptyResult').style.display='flex';$('confirm').disabled=true;$('next').disabled=true;$('scanNextLeft').disabled=true;}
-  function setText(id,text){$(id).textContent=text||'—';}
-  function showResult(data){
-    const k=data.kartu||{};lastResult=k;selectedCode=k.id||'';
-    $('emptyResult').style.display='none';$('participant').style.display='flex';
-    setText('id',k.id);setText('name',k.nama);setText('school',k.sekolah);setText('competition',k.lomba);setText('level',k.tingkatan);setText('class',k.kelas);
-    const attended=String(k.status||'').trim().toLowerCase()==='hadir';
-    $('attendBadge').textContent=attended?'Sudah Hadir':'Belum Hadir';$('attendBadge').className='badge'+(attended?' attended':'');
-    const url=k.fotoDataUrl||'';
-    const canShow=/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(url);
-    $('photo').style.display=canShow?'block':'none';$('photoPlaceholder').style.display=canShow?'none':'grid';
-    if(canShow)$('photo').src=url;else $('photo').removeAttribute('src');
-    $('previewMessage').textContent=data.pesan||(attended?'Peserta ini sudah hadir.':'Periksa identitas, lalu konfirmasi kehadiran.');
-    $('confirm').disabled=attended;$('next').disabled=false;$('scanNextLeft').disabled=false;
+async function listCameras(){
+  if(!window.Html5Qrcode)throw new Error('Library pemindai QR gagal dimuat. Periksa koneksi CDN / internet.');
+  cameraList=await Html5Qrcode.getCameras();
+  const sel=$('cameraSelect');sel.innerHTML='';
+  if(!cameraList.length){sel.add(new Option('Tidak ada kamera terdeteksi',''));throw new Error('Kamera tidak ditemukan. Izinkan kamera di browser dan periksa perangkat.');}
+  cameraList.forEach((c,i)=>sel.add(new Option(c.label||('Kamera '+(i+1)),c.id)));
+  chooseCamera();return cameraList;
+}
+function chooseCamera(){
+  if(!cameraList.length)return;
+  const mode=document.querySelector('input[name="camMode"]:checked').value;
+  if(mode==='pilih')return;
+  const pat=/usb|external|logitech|webcam|hd camera|capture/i;
+  let chosen;
+  if(mode==='usb')chosen=cameraList.find(c=>pat.test(c.label))||cameraList[cameraList.length-1];
+  else chosen=cameraList.find(c=>/integrated|built.in|internal|laptop|front/i.test(c.label))||cameraList.find(c=>!pat.test(c.label))||cameraList[0];
+  $('cameraSelect').value=chosen.id;
+}
+$('listBtn').addEventListener('click',async()=>{try{await listCameras();notice('Pilih kamera lalu klik Mulai Kamera.','good');}catch(e){notice(e.message,'error');}});
+document.querySelectorAll('input[name="camMode"]').forEach(el=>el.addEventListener('change',chooseCamera));
+async function stopCamera(){
+  if(scanner&&cameraRunning){try{if(paused){scanner.resume();paused=false;}await scanner.stop();}catch(e){console.warn(e);}}
+  if(scanner){try{scanner.clear();}catch(_){}}
+  scanner=null;cameraRunning=false;paused=false;$('videoWrap').classList.remove('live');
+  $('startBtn').disabled=false;$('stopBtn').disabled=true;
+}
+async function startCamera(){
+  if(cameraRunning)return;
+  $('startBtn').disabled=true;notice('Meminta izin kamera...');
+  try{
+    if(!cameraList.length)await listCameras();
+    const camId=$('cameraSelect').value;
+    if(!camId)throw new Error('Pilih salah satu kamera.');
+    scanner=new Html5Qrcode('reader',{verbose:false});
+    await scanner.start(camId,{fps:9,qrbox:{width:220,height:220}},text=>{
+      if(!busy&&!current){pauseCamera();lookup(text);}
+    },()=>{});
+    cameraRunning=true;$('videoWrap').classList.add('live');$('stopBtn').disabled=false;
+    notice('Kamera aktif. Arahkan QR peserta ke kamera.','good');
+  }catch(e){
+    notice('Gagal membuka kamera: '+e.message,'error');
+    try{if(scanner)scanner.clear();}catch(_){}scanner=null;$('startBtn').disabled=false;
   }
-  async function lookup(code){
-    code=String(code||'').trim();if(!code)return;
-    if(scanningBlocked){scanMessage('Selesaikan peserta sebelumnya atau klik Scan Berikutnya.','error');return;}
-    scanningBlocked=true;pauseScan();
-    clearResult();scanMessage('Mencari dan memverifikasi peserta...');
-    try {
-      const data=await api('lookup',code);showResult(data);scanMessage('QR valid. Data peserta ditampilkan, belum dicatat Hadir.','good');
-    }catch(e){scanMessage('PENCARIAN GAGAL: '+(e.message||String(e))+' — cek koneksi atau ID peserta, lalu coba lagi.','error');scanningBlocked=false;resumeScan();$('scanNextLeft').disabled=false;}
-  }
-  function onDecoded(text){if(scanningBlocked)return;scanMessage('QR berhasil terbaca. Memverifikasi ID ke Spreadsheet...');lookup(text);}
-  $('manualForm').addEventListener('submit',e=>{e.preventDefault();const code=codeInput.value.trim();if(code){lookup(code);codeInput.value='';}});
-  function nextScan(){if(confirming)return;scanningBlocked=false;clearResult();resumeScan();scanMessage(cameraActive?'Siap membaca QR peserta berikutnya.':'Masukkan ID peserta atau mulai kamera.','good');}
-  $('next').addEventListener('click',nextScan);$('scanNextLeft').addEventListener('click',nextScan);
-  $('confirm').addEventListener('click',async()=>{
-    if(!lastResult||!selectedCode)return;
-    const confirmedId=selectedCode;confirming=true;setBusyButtons(true);$('next').disabled=true;$('scanNextLeft').disabled=true;$('previewMessage').textContent='Menyimpan konfirmasi kehadiran...';
-    try {
-      const msg=await api('confirm',confirmedId);
-      if(selectedCode!==confirmedId)return;
-      lastResult.status='Hadir';$('attendBadge').textContent='Sudah Hadir';$('attendBadge').className='badge attended';
-      $('previewMessage').textContent=msg;scanMessage(msg,'good');$('confirm').disabled=true;
-    }catch(e){$('previewMessage').textContent='Gagal/Belum pasti: '+(e.message||e);scanMessage('Periksa status sebelum mengulang: '+(e.message||e),'error');$('confirm').disabled=false;}
-    finally{confirming=false;if(lastResult){$('next').disabled=false;$('scanNextLeft').disabled=false;}}
-  });
-  window.addEventListener('DOMContentLoaded', initializeBridge);
-  window.addEventListener('beforeunload',()=>{if(scanner&&cameraActive){scanner.stop().catch(()=>{});}});
+}
+$('startBtn').addEventListener('click',startCamera);
+$('stopBtn').addEventListener('click',()=>{stopCamera().then(()=>notice('Kamera dihentikan.'));});
+window.addEventListener('pagehide',()=>{if(cameraRunning)stopCamera();});
 </script>
-</body>
-</html>
+</body></html>
